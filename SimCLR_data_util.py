@@ -216,8 +216,6 @@ def center_crop(image, height, width, crop_proportion):
     image = tf.image.crop_to_bounding_box(
       image, offset_height, offset_width, crop_height, crop_width)
 
-    image = tf.image.resize_bicubic([image], [height, width])[0]
-
     return image
 
 
@@ -271,7 +269,7 @@ def distorted_bounding_box_crop(image,
         return image
 
 
-def crop_and_resize(image, height, width):
+def crop(image, height, width):
     """Make a random crop and resize it to height `height` and width `width`.
     Args:
     image: Tensor representing the image.
@@ -289,8 +287,10 @@ def crop_and_resize(image, height, width):
       aspect_ratio_range=(3. / 4 * aspect_ratio, 4. / 3. * aspect_ratio),
       area_range=(0.7, 1.0),
       max_attempts=100,
-      scope=None)
-    return tf.image.resize_bicubic([image], [height, width])[0]
+      scope=None
+    )
+    
+    return image
 
 
 def gaussian_blur(image, kernel_size, sigma, padding='SAME'):
@@ -331,7 +331,7 @@ def gaussian_blur(image, kernel_size, sigma, padding='SAME'):
     return blurred
 
 
-def random_crop_with_resize(image, height, width, p=1.0):
+def random_crop(image, height, width, p=1.0):
     """Randomly crop and resize an image.
     Args:
     image: `Tensor` representing an image of arbitrary size.
@@ -342,7 +342,7 @@ def random_crop_with_resize(image, height, width, p=1.0):
     A preprocessed image `Tensor`.
     """
     def _transform(image):  # pylint: disable=missing-docstring
-        image = crop_and_resize(image, height, width)
+        image = crop(image, height, width)
         return image
     return random_apply(_transform, p=p, x=image)
 
@@ -422,15 +422,14 @@ def preprocess_for_train(image, height, width,
     A preprocessed image `Tensor`.
     """
     if crop:
-        image = random_crop_with_resize(image, height, width)
+        image = random_crop(image, height, width)
     if flip:
         image = tf.image.random_flip_left_right(image)
     if color_distort:
         image = random_color_jitter(image)
     if blur:
         image = random_blur(image, height, width)
-    image = tf.reshape(image, [height, width, 3])
-    image = tf.clip_by_value(image, 0., 1.)
+    
     return image
 
 
@@ -446,27 +445,40 @@ def preprocess_for_eval(image, height, width, crop=True):
     """
     if crop:
         image = center_crop(image, height, width, crop_proportion=CROP_PROPORTION)
-    image = tf.reshape(image, [height, width, 3])
-    image = tf.clip_by_value(image, 0., 1.)
+
     return image
 
 
 def preprocess_image(image, height, width, is_training=False,
-                     color_distort=True, test_crop=True):
+                     color_distort=True, crop=True, flip=True, blur=True):
     """Preprocesses the given image.
     Args:
-    image: `Tensor` representing an image of arbitrary size.
+    image: `Tensor` representing an image of arbitrary size of standard range [0. 255].
     height: Height of output image.
     width: Width of output image.
     is_training: `bool` for whether the preprocessing is for training.
     color_distort: whether to apply the color distortion.
-    test_crop: whether or not to extract a central crop of the images
-        (as for standard ImageNet evaluation) during the evaluation.
+    crop: whether or not to extract a crop (central crop if eval preprocess as for standard ImageNet evaluation)
+    flip: Whether or not to flip left and right of an image.
+    blur: Whether or not to blur the image.
     Returns:
-    A preprocessed image `Tensor` of range [0, 1].
+    A preprocessed image `Tensor` of standard range [0, 255].
     """
-    image = tf.image.convert_image_dtype(image, dtype=tf.float32)
+    
+    # Cast image to [0,1] floating point range for data augmentation
+    image = tf.image.convert_image_dtype(image / 255, dtype=tf.float32)
+    
+    # Augment data
     if is_training:
-        return preprocess_for_train(image, height, width, color_distort)
+        result_image = preprocess_for_train(image, height, width, color_distort, crop, flip, blur)
     else:
-        return preprocess_for_eval(image, height, width, test_crop)
+        result_image = preprocess_for_eval(image, height, width, crop)
+    
+    # Resize and clip range
+    image = tf.image.resize_bicubic([image], [height, width])[0]
+    image = tf.reshape(image, [height, width, 3])
+    image = tf.clip_by_value(image, 0., 1.)
+    
+    # Return rescaled [0, 255] integer range
+    return tf.dtypes.cast(image * 255, tf.int32)
+     

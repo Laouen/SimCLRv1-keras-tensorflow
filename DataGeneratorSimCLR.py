@@ -2,12 +2,22 @@ import numpy as np
 import cv2 as cv
 
 import tensorflow as tf
-from keras.applications.vgg16 import preprocess_input
 from tensorflow.python.keras.utils import data_utils
+from tensorflow.keras.applications.vgg16 import preprocess_input
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
-from SimCLR_data_util import *
+from SimCLR_data_util import preprocess_image
 import random
 
+from functools import partial
+
+default_augmentation = partial(
+    preprocess_image,
+    color_distort=True,
+    crop=False,
+    flip=False,
+    blur=False,
+)
 
 class DataGeneratorSimCLR(data_utils.Sequence):
     def __init__(
@@ -19,7 +29,9 @@ class DataGeneratorSimCLR(data_utils.Sequence):
         info={},
         width=80,
         height=80,
-        VGG=False,
+        file_col='filename',
+        augmentation_function=default_augmentation,
+        preprocess_image=lambda x: x
     ):
         super().__init__()
         self.df = df
@@ -30,7 +42,9 @@ class DataGeneratorSimCLR(data_utils.Sequence):
         self.info = info
         self.width = width
         self.height = height
-        self.VGG = VGG
+        self.file_col = file_col
+        self.augmentation_function = augmentation_function
+        self.preprocess_image = preprocess_image
         self.on_epoch_end()
 
     def __len__(self):
@@ -41,11 +55,14 @@ class DataGeneratorSimCLR(data_utils.Sequence):
             np.random.shuffle(self.indexes)
 
     def __getitem__(self, index):
+        
+        # Create tha X empty structure
         X = np.empty(
             (2 * self.batch_size, 1, self.height, self.width, 3),
             dtype=np.float32,
         )
 
+        # get data to use
         indexes = self.indexes[
             index * self.batch_size : (index + 1) * self.batch_size
         ]
@@ -55,51 +72,38 @@ class DataGeneratorSimCLR(data_utils.Sequence):
         shuffle_a = np.arange(self.batch_size)
         shuffle_b = np.arange(self.batch_size)
 
-        if self.subset == "train":
-            random.shuffle(shuffle_a)
-            random.shuffle(shuffle_b)
         if self.subset == "val":
             # Exclude randomness for evaluation
             random.seed(42)
-            random.shuffle(shuffle_a)
-            random.shuffle(shuffle_b)
+        
+        random.shuffle(shuffle_a)
+        random.shuffle(shuffle_b)
 
+        # Create labels empty structures
         labels_ab_aa = np.zeros((self.batch_size, 2 * self.batch_size))
         labels_ba_bb = np.zeros((self.batch_size, 2 * self.batch_size))
 
         for i, row in enumerate(batch_data.iterrows()):
-            filename = row[1]["filename"]
+            # Load image
+            filename = row[1][self.file_col]
             self.info[index * self.batch_size + i] = filename
-            img = cv.cvtColor(cv.imread(filename), cv.COLOR_BGR2RGB)
-
-            img = tf.convert_to_tensor(
-                np.asarray((img / 255)).astype("float32")
-            )
-
-            img_T1 = preprocess_for_train(
+            img = img_to_array(load_img(filename))
+            
+            # Make two different augmentations of the same image
+            img_T1 = self.augmentation_function(
                 img,
                 self.height,
-                self.width,
-                color_distort=True,
-                crop=False,
-                flip=False,
-                blur=False,
+                self.width
             )
-            img_T2 = preprocess_for_train(
+            img_T2 = self.augmentation_function(
                 img,
                 self.height,
-                self.width,
-                color_distort=True,
-                crop=False,
-                flip=False,
-                blur=False,
+                self.width
             )
-
-            if self.VGG:
-                img_T1 = tf.dtypes.cast(img_T1 * 255, tf.int32)
-                img_T2 = tf.dtypes.cast(img_T2 * 255, tf.int32)
-                img_T1 = preprocess_input(np.asarray(img_T1))
-                img_T2 = preprocess_input(np.asarray(img_T2))
+            
+            # Preprocess image for the neural network
+            img_T1 = self.preprocess_image(img_T1)
+            img_T2 = self.preprocess_image(img_T2)
 
             # T1-images between 0 -> batch_size - 1
             X[shuffle_a[i]] = img_T1

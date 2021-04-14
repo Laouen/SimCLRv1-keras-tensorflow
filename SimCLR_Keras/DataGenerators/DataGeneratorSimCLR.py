@@ -1,22 +1,19 @@
 import numpy as np
-import cv2 as cv
 
 import tensorflow as tf
 from tensorflow.python.keras.utils import data_utils
 from tensorflow.keras.applications.vgg16 import preprocess_input
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
-from SimCLR_data_util import preprocess_image
 import random
 
 from functools import partial
 
+from SimCLR_Keras.preprocessing import preprocess_image
+
 default_augmentation = partial(
     preprocess_image,
-    color_distort=True,
-    crop=False,
-    flip=False,
-    blur=False,
+    operators=['crop', 'color_distort']
 )
 
 class DataGeneratorSimCLR(data_utils.Sequence):
@@ -66,26 +63,22 @@ class DataGeneratorSimCLR(data_utils.Sequence):
         indexes = self.indexes[
             index * self.batch_size : (index + 1) * self.batch_size
         ]
-        batch_data = self.df.iloc[indexes]
 
         # Add shuffle in order to avoid network recalling fixed order
         shuffle_a = np.arange(self.batch_size)
         shuffle_b = np.arange(self.batch_size)
 
-        if self.subset == "val":
-            # Exclude randomness for evaluation
-            random.seed(42)
-        
-        random.shuffle(shuffle_a)
-        random.shuffle(shuffle_b)
+        # Random input order for training to avoid the network to overfit to the positions
+        if self.subset == "train":
+            random.shuffle(shuffle_a)
+            random.shuffle(shuffle_b)
 
         # Create labels empty structures
         labels_ab_aa = np.zeros((self.batch_size, 2 * self.batch_size))
         labels_ba_bb = np.zeros((self.batch_size, 2 * self.batch_size))
 
-        for i, row in enumerate(batch_data.iterrows()):
+        for i, filename in enumerate(self.df.iloc[indexes][self.file_col]):
             # Load image
-            filename = row[1][self.file_col]
             self.info[index * self.batch_size + i] = filename
             img = img_to_array(load_img(filename))
             
@@ -93,12 +86,14 @@ class DataGeneratorSimCLR(data_utils.Sequence):
             img_T1 = self.augmentation_function(
                 img,
                 self.height,
-                self.width
+                self.width,
+                is_training=self.subset=='train'
             )
             img_T2 = self.augmentation_function(
                 img,
                 self.height,
-                self.width
+                self.width,
+                is_training=self.subset=='train'
             )
             
             # Preprocess image for the neural network
@@ -117,6 +112,4 @@ class DataGeneratorSimCLR(data_utils.Sequence):
 
         y = tf.concat([labels_ab_aa, labels_ba_bb], 1)
 
-        # [None] is used to silence warning
-        # https://stackoverflow.com/questions/59317919/warningtensorflowsample-weight-modes-were-coerced-from-to
-        return list(X), y, [None]
+        return list(X), y

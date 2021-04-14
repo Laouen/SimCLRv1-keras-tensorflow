@@ -408,28 +408,33 @@ def batch_random_blur(images_list, height, width, blur_probability=0.5):
     return new_images_list
 
 
-def preprocess_for_train(image, height, width,
-                         color_distort=True, crop=True, flip=True, blur = True):
+def preprocess_for_train(image, height, width, operators=[]):
+
     """Preprocesses the given image for training.
     Args:
     image: `Tensor` representing an image of arbitrary size.
     height: Height of output image.
     width: Width of output image.
-    color_distort: Whether to apply the color distortion.
-    crop: Whether to crop the image.
-    flip: Whether or not to flip left and right of an image.
+    operators: a list of strings defining operators to apply.
+        * color_distort: Whether to apply the color distortion.
+        * crop: Whether to crop the image.
+        * flip: Whether or not to flip left and right of an image.
+        * blur: Whether or not to apply a blur filter to the image.
+
     Returns:
     A preprocessed image `Tensor`.
     """
-    if crop:
-        image = random_crop(image, height, width)
-    if flip:
-        image = tf.image.random_flip_left_right(image)
-    if color_distort:
-        image = random_color_jitter(image)
-    if blur:
-        image = random_blur(image, height, width)
-    
+
+    for operator in operators:
+        if operator == 'crop':
+            image = random_crop(image, height, width)
+        if operator == 'flip':
+            image = tf.image.random_flip_left_right(image)
+        if operator == 'color_distort':
+            image = random_color_jitter(image)
+        if operator == 'blur':
+            image = random_blur(image, height, width)
+
     return image
 
 
@@ -449,8 +454,7 @@ def preprocess_for_eval(image, height, width, crop=True):
     return image
 
 
-def preprocess_image(image, height, width, is_training=False,
-                     color_distort=True, crop=True, flip=True, blur=True):
+def preprocess_image(image, height, width, is_training=False, operators=[]):
     """Preprocesses the given image.
     Args:
     image: `Tensor` representing an image of arbitrary size of standard range [0. 255].
@@ -470,9 +474,9 @@ def preprocess_image(image, height, width, is_training=False,
     
     # Augment data
     if is_training:
-        result_image = preprocess_for_train(image, height, width, color_distort, crop, flip, blur)
+        result_image = preprocess_for_train(image, height, width, operators)
     else:
-        result_image = preprocess_for_eval(image, height, width, crop)
+        result_image = preprocess_for_eval(image, height, width, 'crop' in operators)
     
     # Resize and clip range
     image = tf.image.resize_bicubic([image], [height, width])[0]
@@ -481,4 +485,5 @@ def preprocess_image(image, height, width, is_training=False,
     
     # Return rescaled [0, 255] integer range
     return tf.dtypes.cast(image * 255, tf.int32)
-     
+
+AUGMENTATION_FUNCTIONS = ['crop', 'flip', 'color_distort', 'blur']

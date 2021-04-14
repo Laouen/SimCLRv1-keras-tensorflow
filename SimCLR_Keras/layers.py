@@ -22,7 +22,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.activations import softmax
 
-from swish import swish
+from SimCLR_Keras.activations import swish
 
 
 class SoftmaxCosineSim(keras.layers.Layer):

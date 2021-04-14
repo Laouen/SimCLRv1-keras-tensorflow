@@ -1,4 +1,3 @@
-import cv2 as cv
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -8,16 +7,17 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.manifold import TSNE
 
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.applications.vgg16 import preprocess_input
 
 
-def get_features(base_model, df, class_labels, VGG=True):
+def get_features(base_model, df, class_labels, preprocess_input=preprocess_input):
     """Computes base_model features encoding from dataframe df
     Args:
         base_model: encoder
         df: Dataframe
         class_labels: labels (strings)
-        VGG: Boolean to confirm if model is VGG (important for preprocessing)
+        preprocess_input: input image preprocessing according with the model specification. Default as VGG16 preprocess_input
     Returns:
         features: base_model features encodings
         y: labels (int)
@@ -36,17 +36,10 @@ def get_features(base_model, df, class_labels, VGG=True):
     features = []
     for label in class_labels:
         for index in range(class_instances[label]):
-            filename = df.loc[df["class_label"] == label]["filename"].iloc[
-                index
-            ]
-            img = cv.cvtColor(cv.imread(filename), cv.COLOR_BGR2RGB)
-            if VGG:
-                # VGG16 preprocessing
-                img_pr = preprocess_input(img)
-            else:
-                # PREPROCESSING TO BE IMPLEMENTED IN CORRESPONDENCE WITH MODEL
-                img_pr = img
-
+            filename = df.loc[df["class_label"] == label]["filename"].iloc[index]
+            img = img_to_array(load_img(filename))
+            img_pr = preprocess_input(img)
+            
             # Feature prediction for each img + Normalization
             feat_un_norm = base_model.predict(np.array([img_pr])).flatten()
             feat_norm = feat_un_norm / np.max(np.abs(feat_un_norm), axis=0)

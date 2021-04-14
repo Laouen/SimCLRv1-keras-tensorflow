@@ -8,12 +8,12 @@ from tensorflow.keras.callbacks import (
     EarlyStopping,
     ReduceLROnPlateau,
 )
-from keras.utils.layer_utils import count_params
+
 from sklearn.metrics import classification_report
 import numpy as np
 
-from DataGeneratorClass import DataGeneratorClass as DataGenerator
-from swish import swish
+from SimCLR_Keras.DataGenerators.DataGeneratorClass import DataGeneratorClass as DataGenerator
+from SimCLR_Keras.activations import swish
 
 
 class Classifier:
@@ -63,7 +63,7 @@ class Classifier:
         # Adamgrad optimizer
         opt = Adam(lr=0.001, amsgrad=True)
 
-        # Combine VGG and extra layers
+        # Combine Base model and extra layers
         classifier_model = Model(base_model.input, classifier_model)
         classifier_model.compile(
             optimizer=opt,
@@ -110,17 +110,20 @@ class Classifier:
             verbose=0,
             save_best_only=True,
             save_weights_only=False,
-            mode="auto",
+            mode="auto"
         )
         earlyStopping = EarlyStopping(
             monitor="val_loss",
             patience=10,
             verbose=0,
             mode="auto",
-            restore_best_weights=True,
+            restore_best_weights=True
         )
         reduce_lr = ReduceLROnPlateau(
-            monitor="val_loss", patience=5, verbose=0, factor=0.5,
+            monitor="val_loss",
+            patience=5,
+            verbose=0,
+            factor=0.5
         )
         return checkpoint, earlyStopping, reduce_lr
 
@@ -133,12 +136,13 @@ class Classifier:
             layer.trainable = True
 
         if pr:
-            trainable_count = count_params(
-                self.classifier_model.trainable_weights
-            )
-            non_trainable_count = count_params(
-                self.classifier_model.non_trainable_weights
-            )
+            trainable_count = np.sum([
+                K.count_params(w) for w in self.classifier_model.trainable_weights
+            ])
+
+            non_trainable_count = np.sum([
+                K.count_params(w) for w in self.classifier_model.non_trainable_weights
+            ])
 
             print(f"trainable parameters: {round(trainable_count/1e6,2)} M.")
             print(

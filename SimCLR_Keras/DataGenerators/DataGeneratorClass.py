@@ -1,7 +1,7 @@
 import numpy as np
-import cv2 as cv
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications.vgg16 import preprocess_input
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.python.keras.utils import data_utils
 
 
@@ -12,13 +12,13 @@ class DataGeneratorClass(data_utils.Sequence):
         batch_size=16,
         subset="train",
         shuffle=True,
-        preprocess=None,
         info={},
         max_width=80,
         max_height=80,
         num_classes=5,
-        VGG=True,
+        preprocess_input=lambda x: x,
         augmentation=None,
+        file_col='filename'
     ):
         super().__init__()
         self.df = df
@@ -26,13 +26,13 @@ class DataGeneratorClass(data_utils.Sequence):
         self.shuffle = shuffle
         self.subset = subset
         self.batch_size = batch_size
-        self.preprocess = preprocess
         self.info = info
         self.max_width = max_width
         self.max_height = max_height
         self.num_classes = num_classes
-        self.VGG = VGG
         self.augmentation = augmentation
+        self.preprocess_input = preprocess_input
+        self.file_col = file_col
         self.datagen = self.datagen()
         self.on_epoch_end()
 
@@ -56,23 +56,18 @@ class DataGeneratorClass(data_utils.Sequence):
         indexes = self.indexes[
             index * self.batch_size : (index + 1) * self.batch_size
         ]
-        batch_data = self.df.iloc[indexes]
-        for i, row in enumerate(batch_data.iterrows()):
-            filename = row[1]["filename"]
+
+        for i, row in enumerate(self.df.iloc[indexes].iterrows()):
+            filename = row[1][self.file_col]
             self.info[index * self.batch_size + i] = filename
-            img = cv.cvtColor(cv.imread(filename), cv.COLOR_BGR2RGB)
-            if self.VGG:
-                X[i,] = preprocess_input(np.asarray(img))
-            else:
-                # Other preprocessing to be implemented in correspondence with chosen model
-                X[i,] = img
+
+            X[i,] = self.preprocess_input(
+                img_to_array(load_img(filename))
+            )
 
             if self.subset == "train":
                 y[i,] = row[1]["class_one_hot"]
 
-        if self.preprocess is not None:
-            X = self.preprocess(X)
-
         # [None] is used to silence warning
         # https://stackoverflow.com/questions/59317919/warningtensorflowsample-weight-modes-were-coerced-from-to
-        return X, y, [None]
+        return X, y

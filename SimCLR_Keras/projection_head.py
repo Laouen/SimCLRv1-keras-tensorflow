@@ -10,7 +10,7 @@ def build_projection_head(
     regul=0.005,
     name='Projection_head'
 ):
-    model = Sequential(name='Projection_head')
+    model = Sequential(name=name)
     for size in feat_dims[:-1]:
         model.add(
             Dense(

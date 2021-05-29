@@ -8,9 +8,9 @@ setup(
     package=['SimCLR-Keras', ''],
     scripts=['scripts/simCLR_pretrain_vgg16.py'],
     install_requires=[
-        'tensorflow-gpu==2.2.0',
+        'tensorflow-gpu',
         'tensorboard',
-        'pandas>=1.1',
+        'pandas',
         'scikit-learn',
         'scipy',
         'numpy',

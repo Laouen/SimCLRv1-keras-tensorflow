@@ -4,7 +4,6 @@ import time
 from functools import partial
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
 import pandas as pd
 import numpy as np
 
@@ -15,6 +14,8 @@ from SimCLR_Keras.DataGenerators.DataGeneratorSimCLR import DataGeneratorSimCLR
 from SimCLR_Keras.model import SimCLR
 from SimCLR_Keras.gpu import use_gpu_and_allow_growth
 from SimCLR_Keras.preprocessing import preprocess_image
+
+from VincentVGG.Utils import retrieve_training_state, remove_training_state
 
 def pretain_vgg16(
     save_path,
@@ -72,20 +73,14 @@ def pretain_vgg16(
     )
 
     # Check and retrieve checkpoint file to resume training
-    initial_epoch = 0
-    checkpoint_files_pattern = os.path.join(
-        save_path, f'checkpoints/*_checkpoint.h5')
-    all_checkpoint_files = glob.glob(checkpoint_files_pattern)
-    if len(all_checkpoint_files) > 0:
-        initial_epoch = max([
-            int(checkpoint_file.split('/')[-1].split('_')[0])
-            for checkpoint_file in all_checkpoint_files
-        ])
-        checkpoint_file = os.path.join(
-            save_path, f'checkpoints/{initial_epoch}_checkpoint.h5')
-        print(f'Usin checkpoint file {checkpoint_file}')
-        model.load_weights(checkpoint_file)
-        time.sleep(4)
+    _, initial_epoch, checkpoint_file = retrieve_training_state(save_path)  
+
+    # Check and retrieve checkpoint file to resume training
+    print(f'Usin checkpoint file {checkpoint_file}')
+    print(f'Initial epcho is {initial_epoch}')
+    time.sleep(4)
+
+    model.load_weights(checkpoint_file)
 
     print('\n*** Plot model ***')
     model.plot_model()
@@ -144,6 +139,7 @@ def pretain_vgg16(
     labels = []
     print(pd.DataFrame(cm, columns=labels, index=labels))
     '''
+    
     print(
         f'Accuracy - test - before: {np.round(np.sum(data_val[0][1] * y_predict_val_before[:batch_size])/(2*batch_size),2)}')
 
@@ -157,8 +153,7 @@ def pretain_vgg16(
     )
 
     print('Remove checkpoint files')
-    [os.remove(checkpoint_file)
-     for checkpoint_file in glob.glob(checkpoint_files_pattern)]
+    remove_training_state(save_path)
 
     print('\n*** Predict on validation after and final results ***')
     y_predict_test_after = model.predict(data_val)
@@ -168,3 +163,4 @@ def pretain_vgg16(
         f'Accuracy - test - before: {np.round(np.sum(data_val[0][1] * y_predict_val_before[:batch_size])/(2*batch_size),2)}')
     print(
         f'Accuracy - test - after: {np.round(np.sum(data_val[0][1] * y_predict_test_after[:batch_size])/(2*batch_size),2)}')
+        

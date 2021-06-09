@@ -2,8 +2,8 @@ import os
 from pathlib import Path
 from datetime import datetime
 
-from tensorflow.keras import Sequential, backend as K
-from tensorflow.keras.layers import Input, Flatten, Dense
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import Input, Flatten
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1
 from tensorflow.keras.models import Model
@@ -20,7 +20,7 @@ from SimCLR_Keras.classifier import Classifier
 from SimCLR_Keras.activations import swish
 from SimCLR_Keras.projection_head import build_projection_head
 
-from VincentVGG.Callbacks import WeightsChangeTracker
+from VincentVGG.Callbacks import WeightsChangeTracker, RestartTrainingModelCheckpoint
 
 import numpy as np
 
@@ -223,7 +223,7 @@ class SimCLR:
     def get_callbacks(self, early_stop_patience=10):
         """ Returns callbacks used while training
         """
-        
+
         # Tensorboard callback
         # Time stamp for checkpoint
         dt_string = datetime.now().strftime("_%m_%d_%Hh_%M")
@@ -231,17 +231,17 @@ class SimCLR:
         Path(tensorboard_dir).mkdir(parents=True, exist_ok=True)
         tensorboard = TensorBoard(log_dir=tensorboard_dir, histogram_freq=1)
 
-        # Checkpoints to resume te training if training crashes
-        resume_checkpoint_dir = os.path.join(self.save_path,'checkpoints') 
-        Path(resume_checkpoint_dir).mkdir(parents=True, exist_ok=True)
-
-        resume_checkpoint = ModelCheckpoint(
-            os.path.join(resume_checkpoint_dir, f'{{epoch}}_checkpoint.h5'),
-            verbose=1,
-            monitor="val_loss",
-            mode="min",
+        # checkpoint save last epoch model to resume training
+        Path(os.path.join(self.save_path, f'checkpoints')).mkdir(parents=True, exist_ok=True)
+        training_resume_checkpoint = RestartTrainingModelCheckpoint(
+            info_file_path=os.path.join(self.save_path, f'checkpoints/last_checkpoint_info.npy'),
+            training_number=0,
+            filepath=os.path.join(self.save_path, f'checkpoints/last_checkpoint.h5'),
+            monitor='val_loss',
+            mode='min',
+            verbose=0,
             save_best_only=False,
-            save_weights_only=True,
+            save_weights_only=False
         )
         
         # Checkpoint to save best model weights
@@ -280,7 +280,7 @@ class SimCLR:
 
         return [
             tensorboard,
-            resume_checkpoint,
+            training_resume_checkpoint,
             best_checkpoint,
             earlyStopping,
             reduce_lr,

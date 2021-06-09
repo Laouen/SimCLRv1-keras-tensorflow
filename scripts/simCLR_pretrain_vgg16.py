@@ -75,7 +75,7 @@ def compile_script_arguments():
     parser.add_argument(
         '--num_of_unfrozen_layers',
         type=int,
-        help='The dimensions of the projection head layers.'
+        help='The number of layers to pretrain from the base model in top-down order.'
     )
     
     parser.add_argument(

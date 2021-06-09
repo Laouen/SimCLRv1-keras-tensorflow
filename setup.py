@@ -5,7 +5,7 @@ setup(
     version='2.0',
     description='SimCLR Contrastive learning library for pretraining image processing models',
     author='Michiel Dhont and Laouen Belloli',
-    package=['SimCLR-Keras', ''],
+    package=['SimCLR_Keras', ''],
     scripts=['scripts/simCLR_pretrain_vgg16.py'],
     install_requires=[
         'tensorboard',

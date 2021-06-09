@@ -16,23 +16,25 @@ from SimCLR_Keras.model import SimCLR
 from SimCLR_Keras.gpu import use_gpu_and_allow_growth
 from SimCLR_Keras.preprocessing import preprocess_image
 
-def train_simclr(save_path,
-         data_dir,
-         df_sep='|',
-         input_shape=(80, 80, 3),
-         batch_size=32,
-         feat_dims_ph=[2048, 128],
-         augmentation_functions=['crop', 'color_distort'],
-         num_of_unfrozen_layers=1,
-         epochs=1000,
-         patience=10,
-         test_size=0.25,
-         gpu_allow_growth=False,
-         random_state=None): # Set a fixed value to ensure same test_train data split over different runs
+def pretain_vgg16(
+    save_path,
+    data_dir,
+    df_sep='|',
+    input_shape=(80, 80, 3),
+    batch_size=32,
+    feat_dims_ph=[2048, 128],
+    augmentation_functions=['crop', 'color_distort'],
+    num_of_unfrozen_layers=1,
+    epochs=1000,
+    patience=10,
+    test_size=0.25,
+    gpu_allow_growth=False,
+    random_state=None): # Set a fixed value to ensure same test_train data split over different runs
     """Train SimCLR constrastive model with the VGG16 as the base model.
 
     Parameters:
-    data_dir (str): The path where to save the resulting trained weights.
+    save_path (str): The path where to save the resulting trained weights
+    data_dir (str): The path of the train/val data with a column named filename and images.
     df_sep (str): The separator character to use for pandas sep argument. Go to pandas.read_csv documentation for more information. Default is '|'.
     input_shape (tuple(int)): The shape of the input image as (with, height, channels). Default is (80, 80, 3).
     batch_size (int): The processing batch size. Default is 32.
@@ -102,7 +104,11 @@ def train_simclr(save_path,
         'preprocess_image': preprocess_input
     }
 
-    df = pd.read_csv(os.path.join(data_dir, 'output_tags.csv'), sep=df_sep)
+    df = pd.read_csv(
+        os.path.join(data_dir, 'output_tags.csv'),
+        sep=df_sep
+    )
+
     df['filename'] = df.id.apply(lambda x: os.path.join(data_dir, f'images/{x}.jpg'))
     df_train, df_test = train_test_split(
         df,

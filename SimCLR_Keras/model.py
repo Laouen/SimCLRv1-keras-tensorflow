@@ -268,9 +268,9 @@ class SimCLR:
         # checkpoint save last epoch model to resume training
         Path(os.path.join(self.save_path, f'checkpoints')).mkdir(parents=True, exist_ok=True)
         training_resume_checkpoint = RestartTrainingModelCheckpoint(
-            info_file_path=os.path.join(self.save_path, f'checkpoints/last_checkpoint_info.npy'),
-            training_number=0,
-            filepath=os.path.join(self.save_path, f'checkpoints/last_checkpoint.h5'),
+            0,
+            os.path.join(self.save_path, f'checkpoints/last_checkpoint_info.npy'),
+            os.path.join(self.save_path, f'checkpoints/last_checkpoint.h5'),
             monitor='val_loss',
             mode='min',
             verbose=0,

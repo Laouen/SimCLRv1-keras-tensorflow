@@ -6,7 +6,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Input, Flatten
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1
-from tensorflow.keras.models import Model
+from tensorflow.keras.models import Model, load_model 
 from tensorflow.keras.utils import plot_model
 from tensorflow.keras.callbacks import (
     TensorBoard,
@@ -83,9 +83,12 @@ class SimCLR:
 
         self.SimCLR_model = self.build_model()
 
-    def build_model(self):
+    def build_model(self, checkpoint=None):
         """ Building SimCLR_model
         """
+
+        if checkpoint is not None:
+            return load_model(checkpoint)
 
         if self.num_of_unfrozen_layers is not None:
             # Set trainable only the last num_of_unfrozen_layers 
@@ -175,20 +178,53 @@ class SimCLR:
         """
         return self.SimCLR_model.predict(data)
 
-    def save_base_model(self, path=None):
-        """ Save base_model with time stamp
+    def fill_base_model_with_trained_weights(self):
+        """Copies the self.SimCLR_model layer weights into the self.base_model layer weights
+        
+        Note: This is usefull becase model could have been loaded with the load_model() function and therefre
+        the self.base_model weigths could not be the same as the trained weights. 
+        Then, before saving the model, it is necessary to copy the trained weightsinto the base model.
         """
         
+        for layer in self.base_model.layers:
+            new_weights = self.SimCLR_model.get_layer(
+                name=layer.name).get_weights()
+            layer.set_weights(new_weights)
+
+    def fill_projection_head_submodel_with_trained_weights(self):
+        """Copies the self.SimCLR_model layer weights into the self.base_model layer weights
+        
+        Note: This is usefull becase model could have been loaded with the load_model() function and therefre
+        the self.base_model weigths could not be the same as the trained weights. 
+        Then, before saving the model, it is necessary to copy the trained weightsinto the base model.
+        """
+
+        for layer in self.ph_l.layers:
+            new_weights = self.SimCLR_model.get_layer(
+                name=layer.name).get_weights()
+            layer.set_weights(new_weights)
+    
+    def save_base_model(self, path=None):
+        """ Save base_model with time stamp
+
+        """
+
         if path is None:
             file_dir = os.path.join(self.save_path, "saved_models")
             Path(file_dir).mkdir(parents=True, exist_ok=True)
             path = os.path.join(file_dir, f'base_model_round_{self.r}.h5')
 
+        self.fill_base_model_with_trained_weights()
         self.base_model.save(path)
 
     def save_base_model_weights(self, path=None):
         """ Save base_model with time stamp
         """
+
+        for layer in self.base_model.layers:
+            new_weights = self.SimCLR_model.get_layer(
+                name=layer.name).get_weights()
+            layer.set_weights(new_weights)
         
         if path is None:
             file_dir = os.path.join(self.save_path, "saved_models")
@@ -206,6 +242,7 @@ class SimCLR:
             Path(file_dir).mkdir(parents=True, exist_ok=True)
             path = os.path.join(file_dir, f'projection_head_round_{self.r}_weights.h5')
 
+        self.fill_projection_head_submodel_with_trained_weights()
         self.ph_l.save_weights(path)
     
     def load_weights(self, path):

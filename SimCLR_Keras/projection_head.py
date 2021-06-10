@@ -11,18 +11,20 @@ def build_projection_head(
     name='Projection_head'
 ):
     model = Sequential(name=name)
-    for size in feat_dims[:-1]:
+    for i,size in enumerate(feat_dims[:-1]):
         model.add(
             Dense(
                 size,
                 activation=activation,
                 kernel_regularizer=l1(regul),
+                name=f'{name}_{i}'
             )
         )
     model.add(
         Dense(
             feat_dims[-1],
-            kernel_regularizer=l1(regul)
+            kernel_regularizer=l1(regul),
+            name=f'{name}_{len(feat_dims)}'
         )
     )
     model.build(input_shape)

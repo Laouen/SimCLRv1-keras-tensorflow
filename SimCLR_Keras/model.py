@@ -36,20 +36,19 @@ class SimCLR:
         - 1 output = matrix of shape (batch_size x 4.batch_size)
     """
 
-    def __init__(
-        self,
-        base_model,
-        input_shape,
-        batch_size,
-        feat_dims_ph,
-        num_of_unfrozen_layers=None,
-        ph_activation='relu',
-        ph_regul=0.005,
-        lr=1e-4,
-        loss="categorical_crossentropy",
-        save_path="models/trashnet",
-        r=1,
-    ):
+    def __init__(self,
+                 base_model,
+                 input_shape,
+                 batch_size,
+                 feat_dims_ph,
+                 num_of_unfrozen_layers=None,
+                 ph_activation='relu',
+                 ph_regul=0.005,
+                 lr=1e-4,
+                 loss="categorical_crossentropy",
+                 save_path="models/trashnet",
+                 r=1):
+        
         self.base_model = base_model
         self.input_shape = input_shape
         self.batch_size = batch_size
@@ -105,7 +104,6 @@ class SimCLR:
         self.g = []  # Projection head
 
         # Getting learnable building blocks
-
         for index in range(2 * self.batch_size):
             self.i.append(Input(shape=self.input_shape))
             self.f_x.append(self.base_model(self.i[index]))
@@ -151,8 +149,7 @@ class SimCLR:
         lr=1e-4,
         epochs=10,
         patience=10,
-        pr=True,
-    ):
+        pr=True):
         """ Changes number of unfrozen layers in the base model and rebuilds it
             Training the SimCLR model and saving best model with time stamp
             Transfers adapted weights to base_model
@@ -325,8 +322,7 @@ class SimCLR:
         lrs=[1e-3, 1e-4, 5e-5, 1e-5],
         epochs=[5, 5, 20, 25],
         verbose_epoch=0,
-        verbose_cycle=1,
-    ):
+        verbose_cycle=1):
         """ Trains and evaluates a nonlinear classifier on top of the base_model
         """
         results = {"acc": 0}

@@ -177,61 +177,17 @@ class SimCLR:
         """ SimCLR prediction
         """
         return self.SimCLR_model.predict(data)
-
-    def fill_base_model_with_trained_weights(self):
-        """Copies the self.SimCLR_model layer weights into the self.base_model layer weights
-        
-        Note: This is usefull becase model could have been loaded with the load_model() function and therefre
-        the self.base_model weigths could not be the same as the trained weights. 
-        Then, before saving the model, it is necessary to copy the trained weightsinto the base model.
-        """
-        
-        for layer in self.base_model.layers:
-            new_weights = self.SimCLR_model.get_layer(
-                name=layer.name).get_weights()
-            layer.set_weights(new_weights)
-
-    def fill_projection_head_submodel_with_trained_weights(self):
-        """Copies the self.SimCLR_model layer weights into the self.base_model layer weights
-        
-        Note: This is usefull becase model could have been loaded with the load_model() function and therefre
-        the self.base_model weigths could not be the same as the trained weights. 
-        Then, before saving the model, it is necessary to copy the trained weightsinto the base model.
-        """
-
-        for layer in self.ph_l.layers:
-            new_weights = self.SimCLR_model.get_layer(
-                name=layer.name).get_weights()
-            layer.set_weights(new_weights)
     
-    def save_base_model(self, path=None):
-        """ Save base_model with time stamp
-
-        """
-
-        if path is None:
-            file_dir = os.path.join(self.save_path, "saved_models")
-            Path(file_dir).mkdir(parents=True, exist_ok=True)
-            path = os.path.join(file_dir, f'base_model_round_{self.r}.h5')
-
-        self.fill_base_model_with_trained_weights()
-        self.base_model.save(path)
-
     def save_base_model_weights(self, path=None):
         """ Save base_model with time stamp
         """
 
-        for layer in self.base_model.layers:
-            new_weights = self.SimCLR_model.get_layer(
-                name=layer.name).get_weights()
-            layer.set_weights(new_weights)
-        
         if path is None:
             file_dir = os.path.join(self.save_path, "saved_models")
             Path(file_dir).mkdir(parents=True, exist_ok=True)
             path = os.path.join(file_dir, f'base_model_round_{self.r}_weights.h5')
 
-        self.base_model.save_weights(path)
+        self.SimCLR_model.get_layer('vgg16').save_weights(path)
     
     def save_projection_head_weights(self, path=None):
         """ Save base_model with time stamp
@@ -242,8 +198,7 @@ class SimCLR:
             Path(file_dir).mkdir(parents=True, exist_ok=True)
             path = os.path.join(file_dir, f'projection_head_round_{self.r}_weights.h5')
 
-        self.fill_projection_head_submodel_with_trained_weights()
-        self.ph_l.save_weights(path)
+        self.SimCLR_model.get_layer('Projection_head').save_weights(path)
     
     def load_weights(self, path):
         self.SimCLR_model.load_weights(path)

@@ -81,44 +81,49 @@ class SimCLR:
             name='Projection_head'
         )
 
-        self.SimCLR_model = self.build_model()
-
     def build_model(self, checkpoint=None):
         """ Building SimCLR_model
         """
 
+        if self.SimCLR_model is not None:
+            print('Clear keras session')
+            del self.SimCLR_model
+            K.clear_session()
+
         if checkpoint is not None:
-            return load_model(checkpoint)
+            self.SimCLR_model = load_model(checkpoint)
 
-        if self.num_of_unfrozen_layers is not None:
-            # Set trainable only the last num_of_unfrozen_layers 
-            for layer in self.base_model.layers[: -self.num_of_unfrozen_layers]:
-                layer.trainable = False
-            for layer in self.base_model.layers[-self.num_of_unfrozen_layers :]:
-                layer.trainable = True
         else:
-            # Set all base model layers as trainable
-            for layer in self.base_model.layers:
-                layer.trainable = True
-                
-        self.i = []  # Inputs (# = 2 x batch_size)
-        self.f_x = []  # Output base_model
-        self.h = []  # Flattened feature representation
-        self.g = []  # Projection head
 
-        # Getting learnable building blocks
-        for index in range(2 * self.batch_size):
-            self.i.append(Input(shape=self.input_shape))
-            self.f_x.append(self.base_model(self.i[index]))
-            self.h.append(self.flatten_layer(self.f_x[index]))
-            self.g.append(self.ph_l(self.h[index]))
+            if self.num_of_unfrozen_layers is not None:
+                # Set trainable only the last num_of_unfrozen_layers 
+                for layer in self.base_model.layers[: -self.num_of_unfrozen_layers]:
+                    layer.trainable = False
+                for layer in self.base_model.layers[-self.num_of_unfrozen_layers :]:
+                    layer.trainable = True
+            else:
+                # Set all base model layers as trainable
+                for layer in self.base_model.layers:
+                    layer.trainable = True
+                    
+            self.i = []  # Inputs (# = 2 x batch_size)
+            self.f_x = []  # Output base_model
+            self.h = []  # Flattened feature representation
+            self.g = []  # Projection head
 
-        self.o = self.soft_cos_sim(self.g)  # Output = Last layer of projection head
+            # Getting learnable building blocks
+            for index in range(2 * self.batch_size):
+                self.i.append(Input(shape=self.input_shape))
+                self.f_x.append(self.base_model(self.i[index]))
+                self.h.append(self.flatten_layer(self.f_x[index]))
+                self.g.append(self.ph_l(self.h[index]))
 
-        # Combine model and compile
-        SimCLR_model = Model(inputs=self.i, outputs=self.o)
-        SimCLR_model.compile(optimizer=self.optimizer, loss=self.loss)
-        return SimCLR_model
+            self.o = self.soft_cos_sim(self.g)  # Output = Last layer of projection head
+
+            # Combine model and compile
+            SimCLR_model = Model(inputs=self.i, outputs=self.o)
+            SimCLR_model.compile(optimizer=self.optimizer, loss=self.loss)
+            self.SimCLR_model = SimCLR_model
 
     def train(self, data_train, data_val, epochs=10, initial_epoch=0, patience=10, pr=True):
         """ Training the SimCLR model and saving best model with time stamp

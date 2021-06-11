@@ -1,5 +1,4 @@
 import os
-import glob
 import time
 from functools import partial
 
@@ -80,8 +79,8 @@ def pretain_vgg16(
     print(f'Initial epcho is {initial_epoch}')
     time.sleep(4)
 
-    if checkpoint_file is not None:
-        model.load_weights(checkpoint_file)
+    print('\n*** Build model ***')
+    model.build_model(checkpoint_file)
 
     print('\n*** Plot model ***')
     model.plot_model()

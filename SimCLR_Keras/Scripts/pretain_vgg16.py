@@ -132,7 +132,9 @@ def pretain_vgg16(
 
     print('\n========= Predict on validation before =========')
     # This calculate the accuracy of positive pairs by taking the average the model output probability
-    # of all positive pairs one time for each i,j and j,i.
+    # of all positive pairs one time for each i,j and j,i. 
+    # y_true has 1s in the position of positive pairs and 0s in all other position. multiplying by y_true
+    # is a way to only sum the probabilities of the positive pairs positions in the matrix
     y_true = np.concatenate([data_val[i][1] for i in range(len(data_val))])
     y_predict_val_before = model.predict(data_val)
     accuracy_before = np.sum(y_true * y_predict_val_before)/(2*len(data_val))

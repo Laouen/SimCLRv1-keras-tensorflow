@@ -131,11 +131,13 @@ def pretain_vgg16(
     )
 
     print('\n========= Predict on validation before =========')
+    # This calculate the accuracy of positive pairs by taking the average the model output probability
+    # of all positive pairs one time for each i,j and j,i.
     y_true = np.concatenate([data_val[i][1] for i in range(len(data_val))])
     y_predict_val_before = model.predict(data_val)
-    accuracy = np.sum(y_true * y_predict_val_before)/(2*batch_size)
+    accuracy_before = np.sum(y_true * y_predict_val_before)/(2*len(data_val))
 
-    print(f'Accuracy - test - before: {np.round(accuracy,2)}')
+    print(f'Accuracy - test - before: {np.round(accuracy_before,2)}')
 
 
     print(f'\n========= Train SimCLR model from epoch {initial_epoch} =========')
@@ -152,10 +154,8 @@ def pretain_vgg16(
 
     print('\n========= Predict on validation after and final results =========')
     y_predict_test_after = model.predict(data_val)
+    accuracy_after = np.sum(y_true * y_predict_test_after)/(2*len(data_val))
 
     print(f'Random guess accuracy: {round(1 / (2*batch_size), 4)}')
-    print(
-        f'Accuracy - test - before: {np.round(np.sum(data_val[0][1] * y_predict_val_before[:batch_size])/(2*batch_size),2)}')
-    print(
-        f'Accuracy - test - after: {np.round(np.sum(data_val[0][1] * y_predict_test_after[:batch_size])/(2*batch_size),2)}')
-        
+    print(f'Accuracy - test - before: {np.round(accuracy_before, 2)}')
+    print(f'Accuracy - test - after: {np.round(accuracy_after, 2)}')

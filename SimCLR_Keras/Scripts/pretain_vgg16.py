@@ -144,8 +144,16 @@ def pretain_vgg16(
     print(
         f'Accuracy - test - before: {np.round(np.sum(data_val[0][1] * y_predict_val_before[:batch_size])/(2*batch_size),2)}')
 
+    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print(y_predict_val_before.shape)
     print(y_predict_val_before)
-    print(data_val)
+    print(y_predict_val_before[:batch_size].shape)
+    print(y_predict_val_before[:batch_size])
+    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print(data_val[0][1].shape)
+    print(data_val[0][1])
+
+    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 
     print(f'\n========= Train SimCLR model from epoch {initial_epoch} =========')
     model.train(

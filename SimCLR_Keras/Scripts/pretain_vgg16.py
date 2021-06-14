@@ -75,17 +75,18 @@ def pretain_vgg16(
     _, initial_epoch, checkpoint_file = retrieve_training_state(save_path)  
 
     # Check and retrieve checkpoint file to resume training
+    print('\n========= Restore checkpoint =========')
     print(f'Usin checkpoint file {checkpoint_file}')
     print(f'Initial epcho is {initial_epoch}')
     time.sleep(4)
 
-    print('\n*** Build model ***')
+    print('\n========= Build model =========')
     model.build_model(checkpoint_file)
 
-    print('\n*** Plot model ***')
+    print('\n========= Plot model =========')
     model.plot_model()
 
-    print(f'\n*** Build Data generators for train/val using augmentations {augmentation_functions}***')
+    print(f'\n========= Build Data generators for train/val using augmentations {augmentation_functions} =========')
     image_augmentation = partial(
         preprocess_image,
         operators=augmentation_functions
@@ -129,7 +130,7 @@ def pretain_vgg16(
         **generator_params
     )
 
-    print('\n*** Predict on validation before ***')
+    print('\n========= Predict on validation before =========')
     y_predict_val_before = model.predict(data_val)
     '''
     cm = confusion_matrix(
@@ -143,7 +144,10 @@ def pretain_vgg16(
     print(
         f'Accuracy - test - before: {np.round(np.sum(data_val[0][1] * y_predict_val_before[:batch_size])/(2*batch_size),2)}')
 
-    print(f'\n*** Train SimCLR model from epoch {initial_epoch}')
+    print(y_predict_val_before)
+    print(data_val)
+
+    print(f'\n========= Train SimCLR model from epoch {initial_epoch} =========')
     model.train(
         data_train,
         data_val,
@@ -152,10 +156,10 @@ def pretain_vgg16(
         patience=patience
     )
 
-    print('Remove checkpoint files')
+    print('\n========= Remove checkpoint files =========')
     remove_training_state(save_path)
 
-    print('\n*** Predict on validation after and final results ***')
+    print('\n========= Predict on validation after and final results =========')
     y_predict_test_after = model.predict(data_val)
 
     print(f'Random guess accuracy: {round(1 / (2*batch_size), 4)}')

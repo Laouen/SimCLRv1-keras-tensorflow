@@ -22,9 +22,6 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.activations import softmax
 
-from SimCLR_Keras.activations import swish
-
-
 class SoftmaxCosineSim(keras.layers.Layer):
     """Custom Keras layer: takes all z-projections as input and calculates
     output matrix which needs to match to [I|O|I|O], where

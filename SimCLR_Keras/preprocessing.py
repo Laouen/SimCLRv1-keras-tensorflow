@@ -474,9 +474,9 @@ def preprocess_image(image, height, width, is_training=False, operators=[]):
     
     # Augment data
     if is_training:
-        result_image = preprocess_for_train(image, height, width, operators)
+        image = preprocess_for_train(image, height, width, operators)
     else:
-        result_image = preprocess_for_eval(image, height, width, 'crop' in operators)
+        image = preprocess_for_eval(image, height, width, 'crop' in operators)
     
     # Resize and clip range
     image = tf.image.resize_bicubic([image], [height, width])[0]

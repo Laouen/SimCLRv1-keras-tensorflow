@@ -17,22 +17,26 @@ default_augmentation = partial(
 )
 
 class DataGeneratorSimCLR(data_utils.Sequence):
-    def __init__(
-        self,
-        df,
-        batch_size=16,
-        subset="train",
-        shuffle=True,
-        info={},
-        width=80,
-        height=80,
-        file_col='filename',
-        augmentation_function=default_augmentation,
-        preprocess_image=lambda x: x
-    ):
+    def __init__(self,
+                 df,
+                 batch_size=16,
+                 subset="train",
+                 shuffle=True,
+                 info={},
+                 width=80,
+                 height=80,
+                 file_col='filename',
+                 augmentation_function=default_augmentation,
+                 preprocess_image=lambda x: x):
+
+        """
+
+        Note: If the batch_size is not a multiple of the df lenght, then the las entries of df are discarded as we need all batches to be the same size.
+        """
+
         super().__init__()
         self.df = df
-        self.indexes = np.asarray(self.df.index)
+        self.data_indexes = np.asarray(self.df.index)
         self.batch_size = batch_size
         self.subset = subset
         self.shuffle = shuffle
@@ -49,9 +53,9 @@ class DataGeneratorSimCLR(data_utils.Sequence):
 
     def on_epoch_end(self):
         if self.shuffle:
-            np.random.shuffle(self.indexes)
+            np.random.shuffle(self.data_indexes)
 
-    def __getitem__(self, index):
+    def __getitem__(self, batch_index):
         
         # Create tha X empty structure
         X = np.empty(
@@ -60,26 +64,26 @@ class DataGeneratorSimCLR(data_utils.Sequence):
         )
 
         # get data to use
-        indexes = self.indexes[
-            index * self.batch_size : (index + 1) * self.batch_size
+        indexes_to_use = self.data_indexes[
+            batch_index * self.batch_size : (batch_index + 1) * self.batch_size
         ]
 
-        # Add shuffle in order to avoid network recalling fixed order
-        shuffle_a = np.arange(self.batch_size)
-        shuffle_b = np.arange(self.batch_size)
+        # Add an index redirection map to allow shuffle in order to avoid network recalling fixed order if training
+        index_map_a = np.arange(self.batch_size)
+        index_map_b = np.arange(self.batch_size)
 
         # Random input order for training to avoid the network to overfit to the positions
         if self.subset == "train":
-            random.shuffle(shuffle_a)
-            random.shuffle(shuffle_b)
+            random.shuffle(index_map_a)
+            random.shuffle(index_map_b)
 
         # Create labels empty structures
         labels_ab_aa = np.zeros((self.batch_size, 2 * self.batch_size))
         labels_ba_bb = np.zeros((self.batch_size, 2 * self.batch_size))
 
-        for i, filename in enumerate(self.df.iloc[indexes][self.file_col]):
+        for i, filename in enumerate(self.df.loc[indexes_to_use][self.file_col]):
             # Load image
-            self.info[index * self.batch_size + i] = filename
+            self.info[batch_index * self.batch_size + i] = filename
             img = img_to_array(load_img(filename))
             
             # Make two different augmentations of the same image
@@ -101,14 +105,14 @@ class DataGeneratorSimCLR(data_utils.Sequence):
             img_T2 = self.preprocess_image(img_T2)
 
             # T1-images between 0 -> batch_size - 1
-            X[shuffle_a[i]] = img_T1
+            X[index_map_a[i]] = img_T1
             # T2-images between batch_size -> 2*batch_size - 1
-            X[self.batch_size + shuffle_b[i]] = img_T2
+            X[self.batch_size + index_map_b[i]] = img_T2
 
             # label ab
-            labels_ab_aa[shuffle_a[i], shuffle_b[i]] = 1
+            labels_ab_aa[index_map_a[i], index_map_b[i]] = 1
             # label ba
-            labels_ba_bb[shuffle_b[i], shuffle_a[i]] = 1
+            labels_ba_bb[index_map_b[i], index_map_a[i]] = 1
 
         y = tf.concat([labels_ab_aa, labels_ba_bb], 1)
 

@@ -131,8 +131,9 @@ def pretain_vgg16(
     )
 
     print('\n========= Predict on validation before =========')
+    y_true = np.concatenate([data_val[i][1] for i in range(len(data_val))])
     y_predict_val_before = model.predict(data_val)
-    accuracy = np.sum(data_val[:][1] * y_predict_val_before)/(2*batch_size)
+    accuracy = np.sum(y_true * y_predict_val_before)/(2*batch_size)
 
     print(f'Accuracy - test - before: {np.round(accuracy,2)}')
 

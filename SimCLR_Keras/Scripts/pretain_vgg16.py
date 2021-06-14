@@ -132,28 +132,10 @@ def pretain_vgg16(
 
     print('\n========= Predict on validation before =========')
     y_predict_val_before = model.predict(data_val)
-    '''
-    cm = confusion_matrix(
-        data_val[0],
-        y_predict_val_before
-    )
-    labels = []
-    print(pd.DataFrame(cm, columns=labels, index=labels))
-    '''
-    
-    print(
-        f'Accuracy - test - before: {np.round(np.sum(data_val[0][1] * y_predict_val_before[:batch_size])/(2*batch_size),2)}')
+    accuracy = np.sum(data_val[:][1] * y_predict_val_before])/(2*batch_size)
 
-    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print(y_predict_val_before.shape)
-    print(y_predict_val_before)
-    print(y_predict_val_before[:batch_size].shape)
-    print(y_predict_val_before[:batch_size])
-    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print(data_val[0][1].shape)
-    print(data_val[0][1])
+    print(f'Accuracy - test - before: {np.round(accuracy,2)}')
 
-    print('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 
     print(f'\n========= Train SimCLR model from epoch {initial_epoch} =========')
     model.train(

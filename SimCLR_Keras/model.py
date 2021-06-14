@@ -81,6 +81,8 @@ class SimCLR:
             name='Projection_head'
         )
 
+        self.SimCLR_model = None
+
     def build_model(self, checkpoint=None):
         """ Building SimCLR_model
         """

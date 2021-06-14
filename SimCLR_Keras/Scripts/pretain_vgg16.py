@@ -57,10 +57,10 @@ def pretain_vgg16(
         include_top=False,
         input_shape=input_shape
     )
-    print('\n*** Build VGG16 base model loaded ***')
+    print('\n========= Build VGG16 base model loaded =========')
     base_model.summary()
 
-    print('\n*** Build SimCLR model to train ***')
+    print('\n========= Build SimCLR model to train =========')
     model = SimCLR(
         base_model=base_model,
         input_shape=input_shape,

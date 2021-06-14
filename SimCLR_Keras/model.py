@@ -93,7 +93,12 @@ class SimCLR:
             K.clear_session()
 
         if checkpoint is not None:
-            self.SimCLR_model = load_model(checkpoint)
+            self.SimCLR_model = load_model(
+                checkpoint,
+                custom_objects={
+                    'SoftmaxCosineSim': SoftmaxCosineSim
+                }
+            )
 
         else:
 

@@ -82,6 +82,7 @@ def pretain_vgg16(
 
     print('\n========= Build model =========')
     model.build_model(checkpoint_file)
+    model.print_weights()
 
     print('\n========= Plot model =========')
     model.plot_model()

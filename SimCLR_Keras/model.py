@@ -100,7 +100,22 @@ class SimCLR:
                 }
             )
 
+            self.base_model = self.SimCLR_model.get_layer('vgg16')
+            self.ph_l = self.SimCLR_model.get_layer('Projection_head')
+
         else:
+
+            # Set the base model trainable layers
+            if self.num_of_unfrozen_layers is not None:
+                # Set trainable only the last num_of_unfrozen_layers
+                for layer in self.SimCLR_model.get_layer('vgg16').layers[:-self.num_of_unfrozen_layers]:
+                    layer.trainable = False
+                for layer in self.SimCLR_model.get_layer('vgg16').layers[-self.num_of_unfrozen_layers:]:
+                    layer.trainable = True
+            else:
+                # Set all base model layers as trainable
+                for layer in self.SimCLR_model.get_layer('vgg16').layers:
+                    layer.trainable = True
                     
             self.i = []  # Inputs (# = 2 x batch_size)
             self.f_x = []  # Output base_model
@@ -120,22 +135,6 @@ class SimCLR:
             SimCLR_model = Model(inputs=self.i, outputs=self.o)
             SimCLR_model.compile(optimizer=self.optimizer, loss=self.loss)
             self.SimCLR_model = SimCLR_model
-        
-        # Set the base model trainable layers
-        if self.num_of_unfrozen_layers is not None:
-            # Set trainable only the last num_of_unfrozen_layers
-            for layer in self.SimCLR_model.get_layer('vgg16').layers[:-self.num_of_unfrozen_layers]:
-                layer.trainable = False
-            for layer in self.SimCLR_model.get_layer('vgg16').layers[-self.num_of_unfrozen_layers:]:
-                layer.trainable = True
-        else:
-            # Set all base model layers as trainable
-            for layer in self.SimCLR_model.get_layer('vgg16').layers:
-                layer.trainable = True
-        
-        # Set as trainable the projection head
-        for layer in self.SimCLR_model.get_layer('Projection_head').layers:
-            layer.trainable = True
 
     def train(self, data_train, data_val, epochs=10, initial_epoch=0, patience=10, pr=True):
         """ Training the SimCLR model and saving best model with time stamp

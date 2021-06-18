@@ -162,3 +162,5 @@ def pretain_vgg16(
     print(f'Random guess accuracy: {round(1 / (2*batch_size), 4)}')
     print(f'Accuracy - test - before: {np.round(accuracy_before, 2)}')
     print(f'Accuracy - test - after: {np.round(accuracy_after, 2)}')
+
+    return model, data_train, data_val

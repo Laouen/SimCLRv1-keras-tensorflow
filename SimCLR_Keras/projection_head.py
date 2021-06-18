@@ -11,6 +11,7 @@ def build_projection_head(
     name='Projection_head'
 ):
     model = Sequential(name=name)
+    
     for i,size in enumerate(feat_dims[:-1]):
         model.add(
             Dense(
@@ -20,6 +21,7 @@ def build_projection_head(
                 name=f'{name}_{i}'
             )
         )
+    
     model.add(
         Dense(
             feat_dims[-1],
@@ -27,5 +29,6 @@ def build_projection_head(
             name=f'{name}_{len(feat_dims)}'
         )
     )
+
     model.build(input_shape)
     return model

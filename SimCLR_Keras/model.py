@@ -293,13 +293,13 @@ class SimCLR:
             ph_weights_change
         ]
 
-    def plot_model(self, filename='model_architecture.png'):
+    def plot_model(self, filename='model_architecture'):
         plot_model(
             self.SimCLR_model,
             show_shapes=True,
             show_layer_names=True,
             rankdir='TB',
-            to_file=os.path.join(self.save_path,filename)
+            to_file=os.path.join(self.save_path,f'{filename}.png')
         )
 
         plot_model(
@@ -307,7 +307,7 @@ class SimCLR:
             show_shapes=True,
             show_layer_names=True,
             rankdir='TB',
-            to_file=os.path.join(self.save_path,f'{filename}_projection_head')
+            to_file=os.path.join(self.save_path,f'{filename}_projection_head.png')
         )
 
         plot_model(
@@ -315,7 +315,7 @@ class SimCLR:
             show_shapes=True,
             show_layer_names=True,
             rankdir='TB',
-            to_file=os.path.join(self.save_path,f'{filename}_{self.base_model.name}')
+            to_file=os.path.join(self.save_path,f'{filename}_{self.base_model.name}.png')
         )
     
     def print_weights(self):

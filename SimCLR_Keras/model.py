@@ -100,7 +100,7 @@ class SimCLR:
                 }
             )
 
-            self.base_model = self.SimCLR_model.get_layer('vgg16')
+            self.base_model = self.SimCLR_model.get_layer(self.base_model.name)
             self.ph_l = self.SimCLR_model.get_layer('Projection_head')
 
         else:
@@ -108,15 +108,15 @@ class SimCLR:
             # Set the base model trainable layers
             if self.num_of_unfrozen_layers is not None:
                 # Set trainable only the last num_of_unfrozen_layers
-                for layer in self.SimCLR_model.get_layer('vgg16').layers[:-self.num_of_unfrozen_layers]:
+                for layer in self.base_model.layers[:-self.num_of_unfrozen_layers]:
                     layer.trainable = False
-                for layer in self.SimCLR_model.get_layer('vgg16').layers[-self.num_of_unfrozen_layers:]:
+                for layer in self.base_model.layers[-self.num_of_unfrozen_layers:]:
                     layer.trainable = True
             else:
                 # Set all base model layers as trainable
-                for layer in self.SimCLR_model.get_layer('vgg16').layers:
+                for layer in self.base_model.layers:
                     layer.trainable = True
-                    
+      
             self.i = []  # Inputs (# = 2 x batch_size)
             self.f_x = []  # Output base_model
             self.h = []  # Flattened feature representation
@@ -203,7 +203,7 @@ class SimCLR:
             Path(file_dir).mkdir(parents=True, exist_ok=True)
             path = os.path.join(file_dir, f'base_model_round_{self.r}_weights.h5')
 
-        self.SimCLR_model.get_layer('vgg16').save_weights(path)
+        self.SimCLR_model.get_layer(self.base_model.name).save_weights(path)
     
     def save_projection_head_weights(self, path=None):
         """ Save base_model with time stamp
@@ -280,7 +280,7 @@ class SimCLR:
         )
         
         # Track base mode weights change
-        base_model_weights_change = WeightsChangeTracker(self.base_model, 'VGG16')
+        base_model_weights_change = WeightsChangeTracker(self.base_model, self.base_model.name)
         ph_weights_change = WeightsChangeTracker(self.ph_l, 'Projection head')
 
         return [

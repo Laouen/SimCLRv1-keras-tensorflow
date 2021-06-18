@@ -301,6 +301,22 @@ class SimCLR:
             rankdir='TB',
             to_file=os.path.join(self.save_path,filename)
         )
+
+        plot_model(
+            self.SimCLR_model.get_layer('Projection_head'),
+            show_shapes=True,
+            show_layer_names=True,
+            rankdir='TB',
+            to_file=os.path.join(self.save_path,f'{filename}_projection_head')
+        )
+
+        plot_model(
+            self.SimCLR_model.get_layer(self.base_model.name),
+            show_shapes=True,
+            show_layer_names=True,
+            rankdir='TB',
+            to_file=os.path.join(self.save_path,f'{filename}_{self.base_model.name}')
+        )
     
     def print_weights(self):
         """ Function to print (non)-learnable weights

@@ -22,7 +22,7 @@ def pretain_vgg16(
     df_sep='|',
     input_shape=(128, 128, 3),
     batch_size=32,
-    feat_dims_ph=[8192, 2048, 512, 128, 32],
+    feat_dims_ph=[4096, 1024, 256, 64],
     augmentation_functions=['crop', 'color_distort'],
     num_of_unfrozen_layers=1,
     epochs=1000,

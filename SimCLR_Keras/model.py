@@ -66,7 +66,7 @@ class SimCLR:
         Path(self.save_path).mkdir(parents=True, exist_ok=True)
 
         # Different layers around base_model
-        self.output_pooling_layer = GlobalAveragePooling2D()
+        self.output_pooling_layer = GlobalAveragePooling2D(data_format='channels_last')
         self.soft_cos_sim = SoftmaxCosineSim(
             batch_size=self.batch_size,
             feat_dim=self.feat_dims_ph[-1]
@@ -75,7 +75,7 @@ class SimCLR:
         # Projection head
         self.ph_l = build_projection_head(
             feat_dims_ph,
-            input_shape=GlobalAveragePooling2D()(self.base_model.output).shape,
+            input_shape=GlobalAveragePooling2D(data_format='channels_last')(self.base_model.output).shape,
             activation=self.ph_activation,
             regul=self.ph_regul,
             name='Projection_head'

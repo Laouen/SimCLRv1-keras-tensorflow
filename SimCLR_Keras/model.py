@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Input, Flatten
+from tensorflow.keras.layers import Input, GlobalAveragePooling2D
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l1
 from tensorflow.keras.models import Model, load_model 
@@ -31,7 +31,7 @@ class SimCLR:
     The SimCLR_model has
         - (2 * batch_size) inputs of shape = (feat_dims_ph[-1])
         - base_model which is stored independently to evaluate its feature quality
-        - flatten_layer
+        - GlobalAveragePooling2D
         - projection_head
         - 1 output = matrix of shape (batch_size x 4.batch_size)
     """
@@ -66,7 +66,7 @@ class SimCLR:
         Path(self.save_path).mkdir(parents=True, exist_ok=True)
 
         # Different layers around base_model
-        self.flatten_layer = Flatten()
+        self.output_pooling_layer = GlobalAveragePooling2D()
         self.soft_cos_sim = SoftmaxCosineSim(
             batch_size=self.batch_size,
             feat_dim=self.feat_dims_ph[-1]
@@ -75,7 +75,7 @@ class SimCLR:
         # Projection head
         self.ph_l = build_projection_head(
             feat_dims_ph,
-            input_shape=Flatten()(self.base_model.output).shape,
+            input_shape=GlobalAveragePooling2D()(self.base_model.output).shape,
             activation=self.ph_activation,
             regul=self.ph_regul,
             name='Projection_head'
@@ -119,14 +119,14 @@ class SimCLR:
       
             self.i = []  # Inputs (# = 2 x batch_size)
             self.f_x = []  # Output base_model
-            self.h = []  # Flattened feature representation
+            self.h = []  # global average pooling feature representation
             self.g = []  # Projection head
 
             # Getting learnable building blocks
             for index in range(2 * self.batch_size):
                 self.i.append(Input(shape=self.input_shape))
                 self.f_x.append(self.base_model(self.i[index]))
-                self.h.append(self.flatten_layer(self.f_x[index]))
+                self.h.append(self.output_pooling_layer(self.f_x[index]))
                 self.g.append(self.ph_l(self.h[index]))
 
             self.o = self.soft_cos_sim(self.g)  # Output = Last layer of projection head

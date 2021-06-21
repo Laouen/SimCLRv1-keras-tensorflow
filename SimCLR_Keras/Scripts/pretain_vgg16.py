@@ -24,7 +24,7 @@ def pretain_vgg16(
     batch_size=32,
     feat_dims_ph=[512, 256, 128, 64],
     augmentation_functions=['crop', 'color_distort'],
-    num_of_unfrozen_layers=1,
+    num_of_unfrozen_layers=None,
     epochs=1000,
     patience=10,
     test_size=0.25,
@@ -40,7 +40,7 @@ def pretain_vgg16(
     batch_size (int): The processing batch size. Default is 32.
     feat_dims_ph (array(int)): The dimensions of the projection head layers. Default is [2048, 128].
     augmentation_functions (array(str)): The augmentation function to apply to the images in the order of application to generate positive pairs. Default is ['crop', 'color_distort'].
-    num_of_unfrozen_layers (int): The number of layers to pretrain from the base model in top-down order. Default is 1.
+    num_of_unfrozen_layers (int or None): If int, the number of layers to pretrain from the base model in top-down order. If None, all layers are trained. Default is None.
     epochs (int): Maximum number of epochs to train de model. Default is 1000.
     patience (int): Maximum number of consecutive epochs without improvement to allow before early stop. Default is 10.
     test_size (float): The proportion of the data to use for evaluate the model. Default is 0.25.

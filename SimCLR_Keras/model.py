@@ -133,7 +133,7 @@ class SimCLR:
 
             # Combine model and compile
             SimCLR_model = Model(inputs=self.i, outputs=self.o)
-            SimCLR_model.compile(optimizer=self.optimizer, loss=self.loss, run_eagerly=True)
+            SimCLR_model.compile(optimizer=self.optimizer, loss=self.loss)
             self.SimCLR_model = SimCLR_model
 
     def train(self, data_train, data_val, epochs=10, initial_epoch=0, patience=10, pr=True):

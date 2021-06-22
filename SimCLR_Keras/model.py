@@ -20,7 +20,7 @@ from SimCLR_Keras.classifier import Classifier
 from SimCLR_Keras.activations import swish
 from SimCLR_Keras.projection_head import build_projection_head
 
-from VincentVGG.Callbacks import WeightsChangeTracker, RestartTrainingModelCheckpoint
+from VincentVGG.Callbacks import WeightsChangeTracker, RestartTrainingModelCheckpoint, ClearMemory
 
 import numpy as np
 
@@ -290,7 +290,8 @@ class SimCLR:
             earlyStopping,
             reduce_lr,
             base_model_weights_change,
-            ph_weights_change
+            ph_weights_change,
+            ClearMemory()
         ]
 
     def plot_model(self, filename='model_architecture'):

@@ -77,7 +77,7 @@ def pretain_vgg16(
     # Check and retrieve checkpoint file to resume training
     print('\n========= Restore checkpoint =========')
     print(f'Usin checkpoint file {checkpoint_file}')
-    print(f'Initial epcho is {initial_epoch}')
+    print(f'Initial epcho is {initial_epoch+1}')
     time.sleep(4)
 
     print('\n========= Build model =========')
@@ -143,7 +143,7 @@ def pretain_vgg16(
     print(f'Accuracy - test - before: {np.round(accuracy_before,2)}')
 
 
-    print(f'\n========= Train SimCLR model from epoch {initial_epoch} =========')
+    print(f'\n========= Train SimCLR model from epoch {initial_epoch+1} =========')
     model.train(
         data_train,
         data_val,

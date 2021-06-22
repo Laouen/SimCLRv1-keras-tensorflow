@@ -23,7 +23,7 @@ def pretain_vgg16(
     input_shape=(80, 80, 3),
     batch_size=32,
     feat_dims_ph=[512, 256, 128, 64],
-    augmentation_functions=['crop', 'color_distort'],
+    augmentation_functions=['crop', 'flip', 'color_distort'],
     num_of_unfrozen_layers=None,
     epochs=1000,
     patience=10,

@@ -24,6 +24,7 @@ from __future__ import print_function
 
 import functools
 
+from tensorflow.image import sample_distorted_bounding_box
 import tensorflow.compat.v1 as tf
 
 
@@ -249,16 +250,15 @@ def distorted_bounding_box_crop(image,
     (cropped image `Tensor`, distorted bbox `Tensor`).
     """
     with tf.name_scope(scope, 'distorted_bounding_box_crop', [image, bbox]):
-        shape = tf.shape(image)
-        sample_distorted_bounding_box = tf.image.sample_distorted_bounding_box(
-            shape,
+        sample_distorted_bounding_box_obtained = sample_distorted_bounding_box(
+            tf.shape(image),
             bounding_boxes=bbox,
             min_object_covered=min_object_covered,
             aspect_ratio_range=aspect_ratio_range,
             area_range=area_range,
             max_attempts=max_attempts,
             use_image_if_no_bounding_boxes=True)
-        bbox_begin, bbox_size, _ = sample_distorted_bounding_box
+        bbox_begin, bbox_size, _ = sample_distorted_bounding_box_obtained
 
         # Crop the image to the specified bounding box.
         offset_y, offset_x, _ = tf.unstack(bbox_begin)

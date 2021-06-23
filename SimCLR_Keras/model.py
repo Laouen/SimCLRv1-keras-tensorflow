@@ -136,7 +136,14 @@ class SimCLR:
             SimCLR_model.compile(optimizer=self.optimizer, loss=self.loss)
             self.SimCLR_model = SimCLR_model
 
-    def train(self, data_train, data_val, epochs=10, initial_epoch=0, patience=10, pr=True):
+    def train(self,
+              data_train,
+              data_val,
+              epochs=10,
+              initial_epoch=0,
+              patience=10,
+              pr=True,
+              track_weight_change=False):
         """ Training the SimCLR model and saving best model with time stamp
             Transfers adapted weights to base_model
         """
@@ -148,7 +155,10 @@ class SimCLR:
             initial_epoch=initial_epoch,
             verbose=1,
             validation_data=data_val,
-            callbacks=self.get_callbacks(patience),
+            callbacks=self.get_callbacks(
+                early_stop_patience=patience,
+                track_weight_change=track_weight_change
+            ),
         )
 
         # Print number of trainable weights
@@ -225,7 +235,7 @@ class SimCLR:
         self.lr = lr
         K.set_value(self.SimCLR_model.optimizer.learning_rate, self.lr)
 
-    def get_callbacks(self, early_stop_patience=10):
+    def get_callbacks(self, early_stop_patience=10, track_weight_change=False):
         """ Returns callbacks used while training
         """
 
@@ -278,21 +288,33 @@ class SimCLR:
             verbose=1,
             factor=0.5
         )
-        
-        # Track base mode weights change
-        base_model_weights_change = WeightsChangeTracker(self.base_model, self.base_model.name)
-        ph_weights_change = WeightsChangeTracker(self.ph_l, 'Projection head')
 
-        return [
+        callback_list = [
             tensorboard,
             training_resume_checkpoint,
             best_checkpoint,
             earlyStopping,
             reduce_lr,
-            base_model_weights_change,
-            ph_weights_change,
             ClearMemory()
         ]
+
+        if track_weight_change:
+            # Track base model weights change
+            callback_list.append(
+                WeightsChangeTracker(
+                    self.base_model,
+                    self.base_model.name
+                )
+            )
+
+            # Track projection head model weights change
+            callback_list.append(
+                WeightsChangeTracker(
+                    self.ph_l,
+                    'Projection head'
+                )
+            )
+
 
     def plot_model(self, filename='model_architecture'):
         plot_model(

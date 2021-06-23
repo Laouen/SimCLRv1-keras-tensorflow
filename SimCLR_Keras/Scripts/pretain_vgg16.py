@@ -28,6 +28,7 @@ def pretain_vgg16(
     epochs=1000,
     patience=10,
     test_size=0.25,
+    track_weight_change=False,
     gpu_allow_growth=False,
     random_state=None): # Set a fixed value to ensure same test_train data split over different runs
     """Train SimCLR constrastive model with the VGG16 as the base model.
@@ -149,7 +150,8 @@ def pretain_vgg16(
         data_val,
         epochs=epochs,
         initial_epoch=initial_epoch,
-        patience=patience
+        patience=patience,
+        track_weight_change=track_weight_change
     )
 
     print('\n========= Remove checkpoint files =========')

@@ -49,7 +49,8 @@ class DataGeneratorSimCLR(data_utils.Sequence):
         self.on_epoch_end()
 
     def __len__(self):
-        return int(np.ceil(len(self.df) / float(self.batch_size)))
+        # Data generator drops last images from self.df if they don't complete a full batch
+        return len(self.df) // self.batch_size
 
     def on_epoch_end(self):
         if self.shuffle:
@@ -57,11 +58,8 @@ class DataGeneratorSimCLR(data_utils.Sequence):
 
     def __getitem__(self, batch_index):
         
-        # Create tha X empty structure
-        X = np.empty(
-            (2 * self.batch_size, 1, self.height, self.width, 3),
-            dtype=np.float32,
-        )
+        # Create tha X empty structure (final shape will be (2*batch_size, 1, height, width, 3))
+        X = [None for i in np.arange(2 * self.batch_size)]
 
         # get data to use
         indexes_to_use = self.data_indexes[
@@ -85,7 +83,7 @@ class DataGeneratorSimCLR(data_utils.Sequence):
             # Load image
             self.info[batch_index * self.batch_size + i] = filename
             img = img_to_array(load_img(filename))
-            
+
             # Make two different augmentations of the same image
             img_T1 = self.augmentation_function(
                 img,
@@ -99,15 +97,15 @@ class DataGeneratorSimCLR(data_utils.Sequence):
                 self.width,
                 is_training=self.subset=='train'
             )
-            
+
             # Preprocess image for the neural network
             img_T1 = self.preprocess_image(img_T1)
             img_T2 = self.preprocess_image(img_T2)
 
             # T1-images between 0 -> batch_size - 1
-            X[index_map_a[i]] = img_T1
+            X[index_map_a[i]] = tf.reshape(img_T1, (1, self.height, self.width, 3))
             # T2-images between batch_size -> 2*batch_size - 1
-            X[self.batch_size + index_map_b[i]] = img_T2
+            X[self.batch_size + index_map_b[i]] = tf.reshape(img_T2, (1, self.height, self.width, 3))
 
             # label ab
             labels_ab_aa[index_map_a[i], index_map_b[i]] = 1
@@ -116,4 +114,4 @@ class DataGeneratorSimCLR(data_utils.Sequence):
 
         y = tf.concat([labels_ab_aa, labels_ba_bb], 1)
 
-        return list(X), y
+        return X, y

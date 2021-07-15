@@ -49,7 +49,6 @@ def pretain_vgg16(
     """
 
     if gpu_allow_growth:
-        print('Initialize GPU', flush=True)
         use_gpu_and_allow_growth()
 
     # base model

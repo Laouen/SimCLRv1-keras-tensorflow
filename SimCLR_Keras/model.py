@@ -314,7 +314,8 @@ class SimCLR:
                     'Projection head'
                 )
             )
-
+        
+        return callback_list
 
     def plot_model(self, filename='model_architecture'):
         plot_model(
